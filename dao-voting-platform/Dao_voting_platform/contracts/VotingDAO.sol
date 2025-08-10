@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-// Optimized for Polygon Amoy Testnet - Lower Gas Costs
-
 contract VotingDAO {
     struct Proposal {
         uint256 id;
@@ -18,7 +16,7 @@ contract VotingDAO {
     
     struct Vote {
         bool hasVoted;
-        bool vote; // true = yes, false = no
+        bool voteChoice;
     }
     
     mapping(uint256 => Proposal) public proposals;
@@ -37,7 +35,7 @@ contract VotingDAO {
     event VoteCast(
         uint256 indexed proposalId,
         address indexed voter,
-        bool vote
+        bool voteChoice
     );
     
     modifier validProposal(uint256 _proposalId) {
@@ -75,7 +73,7 @@ contract VotingDAO {
         emit ProposalCreated(proposalCount, _title, msg.sender, deadline);
     }
     
-    function vote(uint256 _proposalId, bool _vote) 
+    function castVote(uint256 _proposalId, bool _voteChoice) 
         external 
         validProposal(_proposalId) 
         votingActive(_proposalId) 
@@ -84,16 +82,16 @@ contract VotingDAO {
         
         votes[_proposalId][msg.sender] = Vote({
             hasVoted: true,
-            vote: _vote
+            voteChoice: _voteChoice
         });
         
-        if (_vote) {
+        if (_voteChoice) {
             proposals[_proposalId].yesVotes++;
         } else {
             proposals[_proposalId].noVotes++;
         }
         
-        emit VoteCast(_proposalId, msg.sender, _vote);
+        emit VoteCast(_proposalId, msg.sender, _voteChoice);
     }
     
     function getProposal(uint256 _proposalId) 
@@ -125,6 +123,10 @@ contract VotingDAO {
     }
     
     function getAllProposals() external view returns (uint256[] memory) {
+        if (proposalCount == 0) {
+            return new uint256[](0);
+        }
+        
         uint256[] memory proposalIds = new uint256[](proposalCount);
         for (uint256 i = 1; i <= proposalCount; i++) {
             proposalIds[i-1] = i;
@@ -132,7 +134,7 @@ contract VotingDAO {
         return proposalIds;
     }
     
-    function hasVoted(uint256 _proposalId, address _voter) 
+    function hasUserVoted(uint256 _proposalId, address _voter) 
         external 
         view 
         returns (bool) 
@@ -140,12 +142,12 @@ contract VotingDAO {
         return votes[_proposalId][_voter].hasVoted;
     }
     
-    function getVote(uint256 _proposalId, address _voter) 
+    function getUserVote(uint256 _proposalId, address _voter) 
         external 
         view 
-        returns (bool hasVoted, bool vote) 
+        returns (bool userHasVoted, bool voteChoice) 
     {
         Vote memory userVote = votes[_proposalId][_voter];
-        return (userVote.hasVoted, userVote.vote);
+        return (userVote.hasVoted, userVote.voteChoice);
     }
 }
