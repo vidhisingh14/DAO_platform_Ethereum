@@ -9,7 +9,7 @@ const ProposalList = ({ contract, account }) => {
   const [filter, setFilter] = useState('all'); // all, active, ended, myProposals
 
   useEffect(() => {
-    if (contract) {
+    if (contract && account) {
       loadProposals();
     }
   }, [contract, account]);
@@ -19,9 +19,16 @@ const ProposalList = ({ contract, account }) => {
       setLoading(true);
       console.log('🔍 Loading proposals...');
       console.log('Contract:', contract);
+      console.log('Account:', account);
       
       if (!contract) {
         console.error('❌ Contract not initialized');
+        setProposals([]);
+        return;
+      }
+
+      if (!account) {
+        console.error('❌ Account not connected');
         setProposals([]);
         return;
       }
@@ -42,13 +49,22 @@ const ProposalList = ({ contract, account }) => {
       for (let i = 1; i <= Number(proposalCount); i++) {
         try {
           console.log(`📞 Loading proposal ${i}...`);
+          
+          // Get proposal details
           const proposal = await contract.getProposal(i);
-          const hasVoted = await contract.hasVoted(i, account);
+          console.log(`📋 Proposal ${i} data:`, proposal);
+          
+          // Check if user has voted - CORRECT METHOD NAME
+          const hasVoted = await contract.hasUserVoted(i, account);
+          console.log(`🗳️ User has voted on proposal ${i}:`, hasVoted);
+          
           let userVote = null;
           
           if (hasVoted) {
-            const voteData = await contract.getVote(i, account);
-            userVote = voteData[1];
+            // Get user's vote - CORRECT METHOD NAME
+            const voteData = await contract.getUserVote(i, account);
+            userVote = voteData[1]; // voteChoice is the second return value
+            console.log(`✅ User vote on proposal ${i}:`, userVote);
           }
 
           const proposalData = {
@@ -71,6 +87,7 @@ const ProposalList = ({ contract, account }) => {
         }
       }
 
+      // Sort proposals by ID (newest first)
       const sortedProposals = loadedProposals.sort((a, b) => b.id - a.id);
       setProposals(sortedProposals);
       console.log('✅ All proposals loaded:', sortedProposals);
@@ -84,12 +101,15 @@ const ProposalList = ({ contract, account }) => {
 
   const updateProposal = async (proposalId) => {
     try {
+      console.log(`🔄 Updating proposal ${proposalId}...`);
+      
       const proposal = await contract.getProposal(proposalId);
-      const hasVoted = await contract.hasVoted(proposalId, account);
+      // CORRECT METHOD NAMES
+      const hasVoted = await contract.hasUserVoted(proposalId, account);
       let userVote = null;
       
       if (hasVoted) {
-        const voteData = await contract.getVote(proposalId, account);
+        const voteData = await contract.getUserVote(proposalId, account);
         userVote = voteData[1];
       }
 
@@ -106,13 +126,28 @@ const ProposalList = ({ contract, account }) => {
         userVote
       };
 
-      setProposals(prev => prev.map(p => 
-        p.id === updatedProposal.id ? updatedProposal : p
-      ));
+      setProposals(prev => {
+        const updated = prev.map(p => 
+          p.id === updatedProposal.id ? updatedProposal : p
+        );
+        console.log(`✅ Updated proposal ${proposalId}:`, updatedProposal);
+        return updated;
+      });
     } catch (error) {
-      console.error('Error updating proposal:', error);
+      console.error(`❌ Error updating proposal ${proposalId}:`, error);
     }
   };
+
+  // Function to refresh all proposals (call this after creating a new proposal)
+  const refreshProposals = () => {
+    console.log('🔄 Refreshing all proposals...');
+    loadProposals();
+  };
+
+  // Expose refresh function to parent component
+  React.useImperativeHandle(React.forwardRef(), () => ({
+    refreshProposals
+  }));
 
   const getFilteredProposals = () => {
     const now = Math.floor(Date.now() / 1000);
@@ -152,7 +187,7 @@ const ProposalList = ({ contract, account }) => {
         <h2>📊 Proposals</h2>
         <button 
           className="refresh-btn"
-          onClick={loadProposals}
+          onClick={refreshProposals}
           disabled={loading}
         >
           🔄 Refresh

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ethers } from 'ethers';
 import WalletConnect from './components/WalletConnect';
 import ProposalForm from './components/ProposalForm';
@@ -15,6 +15,9 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [networkError, setNetworkError] = useState(false);
   const [currentNetwork, setCurrentNetwork] = useState('');
+  
+  // Reference to ProposalList component for refreshing
+  const proposalListRef = useRef();
 
   useEffect(() => {
     checkWalletConnection();
@@ -134,7 +137,7 @@ function App() {
     setNetworkError(false);
   };
 
-  const switchToAmoy = async () => {
+  const switchToPolygonMainnet = async () => {
     try {
       await ensureCorrectNetwork();
     } catch (error) {
@@ -142,11 +145,22 @@ function App() {
     }
   };
 
+  // Function to refresh proposals after creating a new one
+  const handleProposalCreated = () => {
+    console.log('🎉 Proposal created! Refreshing proposal list...');
+    if (proposalListRef.current && proposalListRef.current.refreshProposals) {
+      // Wait a bit for the blockchain to update
+      setTimeout(() => {
+        proposalListRef.current.refreshProposals();
+      }, 2000);
+    }
+  };
+
   return (
     <div className="App">
       <header className="App-header">
         <h1>🗳️ DAO Voting Platform</h1>
-        <p className="network-info">Polygon Amoy Testnet</p>
+        <p className="network-info">Polygon Mainnet</p>
         <WalletConnect 
           account={account}
           onConnect={connectWallet}
@@ -159,9 +173,9 @@ function App() {
         <div className="network-warning">
           <h3>⚠️ Wrong Network</h3>
           <p>Currently connected to: {currentNetwork}</p>
-          <p>Please switch to Polygon Amoy Testnet</p>
-          <button onClick={switchToAmoy} className="switch-network-btn">
-            Switch to Amoy Testnet
+          <p>Please switch to Polygon Mainnet</p>
+          <button onClick={switchToPolygonMainnet} className="switch-network-btn">
+            Switch to Polygon Mainnet
           </button>
         </div>
       )}
@@ -173,11 +187,13 @@ function App() {
               <ProposalForm 
                 contract={contract}
                 account={account}
+                onProposalCreated={handleProposalCreated}
               />
             </div>
             
             <div className="dashboard-section">
               <ProposalList 
+                ref={proposalListRef}
                 contract={contract}
                 account={account}
               />
@@ -196,11 +212,11 @@ function App() {
             </div>
             
             <div className="testnet-info">
-              <h3>🧪 Testnet Setup</h3>
-              <p>This app uses Polygon Amoy Testnet</p>
-              <p>Get free test MATIC from:</p>
-              <a href="https://faucet.polygon.technology/" target="_blank" rel="noopener noreferrer">
-                Polygon Faucet
+              <h3>🚀 Mainnet Deployment</h3>
+              <p>This app uses Polygon Mainnet</p>
+              <p>Real MATIC tokens required for transactions</p>
+              <a href="https://polygonscan.com/" target="_blank" rel="noopener noreferrer">
+                View on PolygonScan
               </a>
             </div>
           </div>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { handleTransactionError } from '../utils/contract';
 import './ProposalForm.css';
 
-const ProposalForm = ({ contract, account }) => {
+const ProposalForm = ({ contract, account, onProposalCreated }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: ''
@@ -91,6 +91,11 @@ const ProposalForm = ({ contract, account }) => {
       
       // Show success message
       alert(`Proposal created successfully! 🎉\nTransaction: ${tx.hash}`);
+      
+      // Trigger refresh of proposal list
+      if (onProposalCreated) {
+        onProposalCreated();
+      }
       
     } catch (error) {
       console.error('Error creating proposal:', error);

@@ -11,7 +11,7 @@ const WalletConnect = ({ account, onConnect, onDisconnect, loading }) => {
             <div className="account-avatar">👤</div>
             <div className="account-details">
               <span className="account-address">{formatAddress(account)}</span>
-              <span className="network-badge">Polygon Amoy</span>
+              <span className="network-badge">Polygon Mainnet</span>
             </div>
           </div>
           <button 

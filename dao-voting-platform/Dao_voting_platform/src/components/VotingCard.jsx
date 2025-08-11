@@ -21,13 +21,14 @@ const VotingCard = ({ proposal, contract, account, onVoteCast }) => {
 
     try {
       console.log(`Voting ${voteChoice ? 'YES' : 'NO'} on proposal ${proposal.id}`);
+      console.log('Contract methods available:', Object.getOwnPropertyNames(contract));
       
-      // Estimate gas
-      const gasEstimate = await contract.vote.estimateGas(proposal.id, voteChoice);
+      // Estimate gas - CORRECT METHOD NAME
+      const gasEstimate = await contract.castVote.estimateGas(proposal.id, voteChoice);
       console.log('Gas estimate:', gasEstimate.toString());
 
-      // Cast vote
-      const tx = await contract.vote(proposal.id, voteChoice, {
+      // Cast vote - CORRECT METHOD NAME
+      const tx = await contract.castVote(proposal.id, voteChoice, {
         gasLimit: gasEstimate * 120n / 100n // Add 20% buffer
       });
 
